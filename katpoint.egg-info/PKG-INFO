@@ -1,0 +1,28 @@
+Metadata-Version: 1.1
+Name: katpoint
+Version: 0.6
+Summary: Karoo Array Telescope pointing coordinate library
+Home-page: https://github.com/ska-sa/katpoint
+Author: Ludwig Schwardt
+Author-email: ludwig@ska.ac.za
+License: BSD
+Description: katpoint
+        ========
+        
+        Coordinate library for the MeerKAT project, providing astronomical coordinate
+        transformations, antenna pointing models, correlator delay models, source flux
+        models and basic source catalogues, using an existing coordinate library such
+        as PyEphem to do the low-level calculations.
+        
+Keywords: meerkat ska
+Platform: OS Independent
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Scientific/Engineering :: Astronomy
