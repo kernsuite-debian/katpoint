@@ -12,7 +12,8 @@ X-Python-Version: >= 2.7
 
 Package: python-katpoint
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
+ python-katversion, python-ephem
 Description: Karoo Array Telescope pointing coordinate library
  Coordinate library for the MeerKAT project, providing astronomical coordinate
  transformations, antenna pointing models, correlator delay models, source
