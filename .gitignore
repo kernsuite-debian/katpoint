@@ -1,11 +1,36 @@
-.pybuild/
-build/
-*.egg-info/
-debian/debhelper-build-stamp
-debian/files
-debian/python-*.debhelper.log
-debian/python-*.postinst.debhelper
-debian/python-*.prerm.debhelper
-debian/python-*.substvars
-debian/python-*/
+# C extensions
+*.so
+*.so.dSYM
 
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+.eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+__pycache__
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Developer tools
+*~
+.ropeproject
+
+# Downloaded AIPS source files
+katpoint/test/aips_projection/*.F
+katpoint/test/aips_projection/*.INC
