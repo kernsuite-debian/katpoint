@@ -19,6 +19,8 @@
 import numpy as np
 import ephem
 
+from past.builtins import basestring
+
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
 from .ephem_extra import (StationaryBody, NullBody, is_iterable, lightspeed,
@@ -167,6 +169,10 @@ class Target(object):
     def __lt__(self, other):
         """Less-than comparison operator (needed for sorting and np.unique)."""
         return self.description < (other.description if isinstance(other, Target) else other)
+
+    def __hash__(self):
+        """Base hash on description string, just like equality operator."""
+        return hash(self.description)
 
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
@@ -470,7 +476,7 @@ class Target(object):
                 return l, b
         ra, dec = self.astrometric_radec(timestamp, antenna)
         if is_iterable(ra):
-            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in xrange(len(ra))])
+            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in range(len(ra))])
             return lb[:, 0], lb[:, 1]
         else:
             return ephem.Galactic(ephem.Equatorial(ra, dec)).get()

@@ -62,7 +62,7 @@ try:
 except NameError:
     # IPython 0.10 and below (or normal Python shell)
     _ip = __builtins__.get('__IPYTHON__')
-if _ip is not None:
+if hasattr(_ip, 'set_hook'):
     _ip.set_hook('complete_command', _catalogue_completer, re_key=r"(?:.*\=)?(.+?)\[")
 
 
@@ -77,6 +77,13 @@ _no_config_handler.addFilter(_NoConfigFilter())
 logger = _logging.getLogger(__name__)
 logger.addHandler(_no_config_handler)
 
-
-# Automatically added by katversion
-__version__ = '0.6'
+# BEGIN VERSION CHECK
+# Get package version when locally imported from repo or via -e develop install
+try:
+    import katversion as _katversion
+except ImportError:
+    import time as _time
+    __version__ = "0.0+unknown.{}".format(_time.strftime('%Y%m%d%H%M'))
+else:
+    __version__ = _katversion.get_version(__path__[0])
+# END VERSION CHECK

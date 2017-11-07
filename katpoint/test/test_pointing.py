@@ -44,7 +44,7 @@ class TestPointingModel(unittest.TestCase):
         """Test construction / load / save of pointing model."""
         params = katpoint.deg2rad(np.random.randn(self.num_params + 1))
         pm = katpoint.PointingModel(params[:-1])
-        print repr(pm), pm
+        print('%r %s' % (pm, pm))
         pm2 = katpoint.PointingModel(params[:-2])
         self.assertEqual(pm2.values()[-1], 0.0, 'Unspecified pointing model params not zeroed')
         pm3 = katpoint.PointingModel(params)
@@ -54,6 +54,10 @@ class TestPointingModel(unittest.TestCase):
         self.assertEqual(pm4, pm, 'Pointing models should be equal')
         self.assertNotEqual(pm2, pm, 'Pointing models should be inequal')
         np.testing.assert_almost_equal(pm4.values(), pm.values(), decimal=6)
+        try:
+            self.assertEqual(hash(pm4), hash(pm), 'Pointing model hashes not equal')
+        except TypeError:
+            self.fail('PointingModel object not hashable')
 
     def test_pointing_closure(self):
         """Test closure between pointing correction and its reverse operation."""
