@@ -1,3 +1,11 @@
+katpoint (0.7-1kern1) xenial; urgency=medium
+
+  * add watch file
+  * make debian files mit
+  * Imported Upstream version 0.7
+
+ -- KERN packaging <packaging@kernsuite.info>  Tue, 07 Nov 2017 15:51:51 +0200
+
 katpoint (0.6-1kern1) xenial; urgency=medium
 
   * add missing python-ephem dependency
