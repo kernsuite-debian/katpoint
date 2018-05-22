@@ -1,3 +1,9 @@
+katpoint (0.7-1kern2) bionic; urgency=medium
+
+  * build for KERN-4 (bionic)
+
+ -- KERN packaging <packaging@kernsuite.info>  Tue, 22 May 2018 17:38:53 +0200
+
 katpoint (0.7-1kern1) xenial; urgency=medium
 
   * add watch file
