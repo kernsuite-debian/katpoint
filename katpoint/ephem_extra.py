@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -15,7 +15,8 @@
 ################################################################################
 
 """Enhancements to PyEphem."""
-
+from __future__ import print_function, division, absolute_import
+from builtins import object
 from past.builtins import basestring
 
 import numpy as np
@@ -128,7 +129,6 @@ class StationaryBody(object):
         given *observer*, while its (az, el) coordinates remain unchanged.
 
         """
-        # pylint: disable-msg=W0201
         if isinstance(observer, ephem.Observer):
             ra, dec = observer.radec_of(self.az, self.el)
             self.ra = ra

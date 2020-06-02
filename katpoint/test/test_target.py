@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -15,15 +15,11 @@
 ################################################################################
 
 """Tests for the target module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 import time
-
-try:
-    import cPickle as pickle  # python2
-except ImportError:
-    import pickle  # python3
+import pickle
 
 import numpy as np
 
@@ -31,6 +27,7 @@ import katpoint
 
 # Use the current year in TLE epochs to avoid pyephem crash due to expired TLEs
 YY = time.localtime().tm_year % 100
+
 
 class TestTargetConstruction(unittest.TestCase):
     """Test construction of targets from strings and vice versa."""
@@ -60,7 +57,7 @@ class TestTargetConstruction(unittest.TestCase):
                               'Betelgeuse | Maitland, star orion',
                               'xephem star, Sadr~f|S|F8~20:22:13.7|2.43~40:15:24|-0.93~2.23~2000~0',
                               'Acamar | Theta Eridani, xephem, HIC 13847~f|S|A4~2:58:16.03~-40:18:17.1~2.906~2000~0',
-                              'Kakkab | Alpha Lupi, xephem, HIC 71860 | SAO 225128~f|S|B1~14:41:55.768~-47:23:17.51~2.304~2000~0']
+                              'Kakkab | A Lupi, xephem, H71860 | S225128~f|S|B1~14:41:55.768~-47:23:17.51~2.304~2000~0']
         self.invalid_targets = ['Sun',
                                 'Sun, ',
                                 '-30.0, 90.0',
@@ -159,6 +156,7 @@ class TestTargetConstruction(unittest.TestCase):
         tag_target.add_tags(['SNR', 'GPS'])
         self.assertEqual(tag_target.tags, ['azel', 'J2000', 'GPS', 'pulsar', 'SNR'], 'Added tags not correct')
 
+
 class TestTargetCalculations(unittest.TestCase):
     """Test various calculations involving antennas and timestamps."""
     def setUp(self):
@@ -166,6 +164,7 @@ class TestTargetCalculations(unittest.TestCase):
         self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
         self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
         self.ts = katpoint.Timestamp('2013-08-14 08:25')
+        self.uvw = [10.822861713680807, -9.103057965680664, -2.220446049250313e-16]
 
     def test_coords(self):
         """Test coordinate conversions for coverage."""
@@ -187,16 +186,51 @@ class TestTargetCalculations(unittest.TestCase):
     def test_uvw(self):
         """Test uvw calculation."""
         u, v, w = self.target.uvw(self.ant2, self.ts, self.ant1)
-        np.testing.assert_almost_equal(u, 10.821750916197391, decimal=5)
-        np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=5)
-        np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=5)
+        np.testing.assert_almost_equal(u, self.uvw[0], decimal=5)
+        np.testing.assert_almost_equal(v, self.uvw[1], decimal=5)
+        np.testing.assert_almost_equal(w, self.uvw[2], decimal=5)
 
-    def test_uvw_array(self):
+    def test_uvw_timestamp_array(self):
         """Test uvw calculation on an array."""
         u, v, w = self.target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
-        np.testing.assert_array_almost_equal(u, np.array([10.821750916197391] * 2), decimal=5)
-        np.testing.assert_array_almost_equal(v, np.array([-9.1043784587765906] * 2), decimal=5)
-        np.testing.assert_array_almost_equal(w, np.array([4.7781625336985198e-10] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(u, np.array([self.uvw[0]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([self.uvw[1]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([self.uvw[2]] * 2), decimal=5)
+
+    def test_uvw_timestamp_array_radec(self):
+        """Test uvw calculation on a timestamp array when the target is a radec target."""
+        ra, dec = self.target.radec(self.ts, self.ant1)
+        target = katpoint.construct_radec_target(ra, dec)
+        u, v, w = target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([self.uvw[0]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([self.uvw[1]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([self.uvw[2]] * 2), decimal=5)
+
+    def test_uvw_antenna_array(self):
+        u, v, w = self.target.uvw([self.ant1, self.ant2], self.ts, self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([0, self.uvw[0]]), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([0, self.uvw[1]]), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([0, self.uvw[2]]), decimal=5)
+
+    def test_uvw_both_array(self):
+        u, v, w = self.target.uvw([self.ant1, self.ant2], [self.ts, self.ts], self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([[0, self.uvw[0]]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([[0, self.uvw[1]]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([[0, self.uvw[2]]] * 2), decimal=5)
+
+    def test_uvw_hemispheres(self):
+        """Test uvw calculation near the equator.
+
+        The implementation behaves differently depending on the sign of
+        declination. This test is to catch sign flip errors.
+        """
+        target1 = katpoint.construct_radec_target(0.0, -1e-9)
+        target2 = katpoint.construct_radec_target(0.0, +1e-9)
+        u1, v1, w1 = target1.uvw(self.ant2, self.ts, self.ant1)
+        u2, v2, w2 = target2.uvw(self.ant2, self.ts, self.ant1)
+        np.testing.assert_almost_equal(u1, u2, decimal=3)
+        np.testing.assert_almost_equal(v1, v2, decimal=3)
+        np.testing.assert_almost_equal(w1, w2, decimal=3)
 
     def test_lmn(self):
         """Test lmn calculation."""

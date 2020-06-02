@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -19,6 +19,8 @@
 This implements correction for refractive bending in the atmosphere.
 
 """
+from __future__ import print_function, division, absolute_import
+from builtins import object, range
 
 import logging
 
@@ -60,15 +62,9 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
     The code is based on poclb/refrwn.c in Field System version 9.9.2, which
     was added on 2006-11-15. This is a C version (with typos fixed) of the
     Fortran version in polb/refr.f. As noted in the Field System
-    documentation [1]_, the refraction model originated with the Haystack
+    documentation [Him1993]_, the refraction model originated with the Haystack
     pointing system, but the documentation for this algorithm seems to have
     been lost. It agrees well with the DSN refraction model, though.
-
-    References
-    ----------
-    .. [1] Himwich, "Station Programs," Mark IV Field System Reference Manual,
-       Version 8.2, 1 September 1993, available at
-       `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/stprog.pdf>`_
 
     """
     p = (0.458675e1, 0.322009e0, 0.103452e-1, 0.274777e-3, 0.157115e-5)
@@ -217,7 +213,7 @@ class RefractionCorrection(object):
                 lower = np.where(test_el < refracted_el, el, lower)
                 upper = np.where(test_el > refracted_el, el, upper)
         else:
-            logger.warning('Reverse refraction correction did not converge' +
-                           ' in %d iterations - elevation differs by at most %f arcsecs' %
-                           (iteration + 1, rad2deg(np.abs(test_el - refracted_el).max()) * 3600.))
+            logger.warning('Reverse refraction correction did not converge in '
+                           '%d iterations - elevation differs by at most %f arcsecs',
+                           iteration + 1, rad2deg(np.abs(test_el - refracted_el).max()) * 3600.)
         return el

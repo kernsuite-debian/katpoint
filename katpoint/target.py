@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -15,11 +15,12 @@
 ################################################################################
 
 """Target object used for pointing and flux density calculation."""
+from __future__ import print_function, division, absolute_import
+from builtins import object, range
+from past.builtins import basestring
 
 import numpy as np
 import ephem
-
-from past.builtins import basestring
 
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
@@ -27,6 +28,11 @@ from .ephem_extra import (StationaryBody, NullBody, is_iterable, lightspeed,
                           deg2rad, rad2deg, angle_from_degrees, angle_from_hours)
 from .conversion import azel_to_enu
 from .projection import sphere_to_plane, sphere_to_ortho, plane_to_sphere
+
+
+class NonAsciiError(ValueError):
+    """Exception when non-ascii characters are found."""
+    pass
 
 
 class Target(object):
@@ -132,7 +138,6 @@ class Target(object):
             descr += ' (%s)' % (', '.join(self.aliases),)
         descr += ', tags=%s' % (' '.join(self.tags),)
         if 'radec' in self.tags:
-            # pylint: disable-msg=W0212
             descr += ', %s %s' % (self.body._ra, self.body._dec)
         if self.body_type == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
@@ -236,7 +241,6 @@ class Target(object):
             # Check if it's an unnamed target with a default name
             if names.startswith('Ra:'):
                 fields = [tags]
-            # pylint: disable-msg=W0212
             fields += [str(self.body._ra), str(self.body._dec)]
             if fluxinfo:
                 fields += [fluxinfo]
@@ -476,7 +480,8 @@ class Target(object):
                 return l, b
         ra, dec = self.astrometric_radec(timestamp, antenna)
         if is_iterable(ra):
-            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in range(len(ra))])
+            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get()
+                           for n in range(len(ra))])
             return lb[:, 0], lb[:, 1]
         else:
             return ephem.Galactic(ephem.Equatorial(ra, dec)).get()
@@ -511,14 +516,12 @@ class Target(object):
 
         Notes
         -----
-        The formula can be found in the AIPS++ glossary [1]_ or in the SLALIB
+        The formula can be found in the `AIPS++ glossary`_ or in the SLALIB
         source code (file pa.f, function sla_PA) which is part of the now
-        defunct Starlink project [2]_.
+        defunct `Starlink project`_.
 
-        References
-        ----------
-        .. [1] "AIPS++ Glossary," `<http://www.astron.nl/aips++/docs/glossary/p.html>`_
-        .. [2] "Starlink Project," `<http://www.starlink.rl.ac.uk>`_
+        .. _`AIPS++ Glossary`: http://www.astron.nl/aips++/docs/glossary/p.html
+        .. _`Starlink Project`: http://www.starlink.rl.ac.uk
 
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
@@ -613,24 +616,42 @@ class Target(object):
             dimension to the timestamp.
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        # NCP vector is J2000 NCP
-        ncp = construct_radec_target(0.0, np.pi / 2.0)
-        # Get J2000 NCP az-el vector at current epoch pointed to by reference antenna
-        ncp_az, ncp_el = ncp.azel(timestamp, antenna)
+        if is_iterable(timestamp) and self.body_type != 'radec':
+            # Some calculations depend on ra/dec in a way that won't easily
+            # vectorise.
+            bases = [self.uvw_basis(t, antenna) for t in timestamp]
+            return np.stack(bases, axis=-1)
+
+        # Offset the target slightly in declination to approximate the
+        # derivative of ENU in the direction of increasing declination. This
+        # used to just use the NCP, but the astrometric-to-topocentric
+        # conversion doesn't simply rotate the celestial sphere, but also
+        # distorts it, and so that introduced errors.
+        #
+        # To avoid issues close to the poles, we always offset towards the
+        # equator. We also can't offset by too little, as ephem uses only
+        # single precision and this method suffers from loss of precision.
+        # 0.03 was found by experimentation (albeit on a single data set) to
+        # to be large enough to avoid the numeric instability.
+        if is_iterable(timestamp):
+            # Due to the test above, this is a radec target and so timestamp
+            # doesn't matter. But we want a scalar.
+            ra, dec = self.radec(None, antenna)
+        else:
+            ra, dec = self.radec(timestamp, antenna)
+        offset_sign = -1 if dec > 0 else 1
+        offset = construct_radec_target(ra, dec + 0.03 * offset_sign)
+        # Get offset az-el vector at current epoch pointed to by reference antenna
+        offset_az, offset_el = offset.azel(timestamp, antenna)
         # Obtain direction vector(s) from reference antenna to target
         az, el = self.azel(timestamp, antenna)
         # w axis points toward target
         w = np.array(azel_to_enu(az, el))
-        # enu vector pointing from reference antenna to north celestial pole
-        z = np.array(azel_to_enu(ncp_az, ncp_el))
-        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors (for finding poles)
-        u = np.row_stack(np.cross(z, w, axis=0))
+        # enu vector pointing from reference antenna to offset point
+        z = np.array(azel_to_enu(offset_az, offset_el))
+        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors
+        u = np.row_stack(np.cross(z, w, axis=0)) * offset_sign
         u_norm = np.sqrt(np.sum(u ** 2, axis=0))
-        # If the target is a celestial pole (so that w equals z or -z), u and v become degenerate
-        poles = u_norm < 1e-12
-        # Arbitrarily pick east vector of ENU system as u in this case
-        u[:, poles] = [[1.0], [0.0], [0.0]]
-        u_norm[poles] = 1.0
         # Ensure that u and w (and therefore v) have the same shape to handle scalar vs array output correctly
         u = u.reshape(w.shape) / u_norm
         v = np.cross(w, u, axis=0)
@@ -648,7 +669,7 @@ class Target(object):
 
         Parameters
         ----------
-        antenna2 : :class:`Antenna` object
+        antenna2 : :class:`Antenna` object or sequence
             Second antenna of baseline pair (baseline vector points toward it)
         timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
@@ -658,8 +679,10 @@ class Target(object):
 
         Returns
         -------
-        u, v, w : float, or array of same shape as *timestamp*
-            (u, v, w) coordinates of baseline, in metres
+        u, v, w : float or array
+            (u, v, w) coordinates of baseline, in metres. If `timestamp` and/or
+            `antenna2` is a sequence, returns an array, with axes in that
+            order.
 
         Notes
         -----
@@ -670,14 +693,17 @@ class Target(object):
 
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        # Obtain baseline vector from reference antenna to second antenna
-        baseline_m = antenna.baseline_toward(antenna2)
         # Obtain basis vectors
         basis = self.uvw_basis(timestamp, antenna)
+        # Obtain baseline vector from reference antenna to second antenna
+        if is_iterable(antenna2):
+            baseline_m = np.stack([antenna.baseline_toward(a2) for a2 in antenna2])
+        else:
+            baseline_m = antenna.baseline_toward(antenna2)
         # Apply linear coordinate transformation. A single call np.dot won't
         # work for both the scalar and array case, so we explicitly specify the
         # axes to sum over.
-        u, v, w = np.tensordot(basis, baseline_m, ([1], [0]))
+        u, v, w = np.tensordot(basis, baseline_m, ([1], [-1]))
         return u, v, w
 
     def lmn(self, ra, dec, timestamp=None, antenna=None):
@@ -718,6 +744,9 @@ class Target(object):
         frequency is out of range, a flux value of NaN is returned for that
         frequency.
 
+        This returns only Stokes I. Use :meth:`flux_density_stokes` to get
+        polarisation information.
+
         Parameters
         ----------
         freq_MHz : float or sequence, optional
@@ -741,8 +770,46 @@ class Target(object):
             raise ValueError('Please specify frequency at which to measure flux density')
         if self.flux_model is None:
             # Target has no specified flux density
-            return np.tile(np.nan, np.shape(flux_freq_MHz)) if is_iterable(flux_freq_MHz) else np.nan
+            return np.full(np.shape(flux_freq_MHz), np.nan) if is_iterable(flux_freq_MHz) else np.nan
         return self.flux_model.flux_density(flux_freq_MHz)
+
+    def flux_density_stokes(self, flux_freq_MHz=None):
+        """Calculate flux density for given observation frequency (or frequencies), full-Stokes.
+
+        See :meth:`flux_density`
+        This uses the stored flux density model to calculate the flux density at
+        a given frequency (or frequencies). See the documentation of
+        :class:`FluxDensityModel` for more details of this model. If the flux
+        frequency is unspecified, the default value supplied to the target object
+        during construction is used. If no flux density model is available or a
+        frequency is out of range, a flux value of NaN is returned for that
+        frequency.
+
+        Parameters
+        ----------
+        freq_MHz : float or sequence, optional
+            Frequency at which to evaluate flux density, in MHz
+
+        Returns
+        -------
+        flux_density : array of float
+            Flux density in Jy, or np.nan if frequency is out of range or target
+            does not have flux model. The shape matches the input with an extra
+            trailing dimension of size 4 containing Stokes I, Q, U, V.
+
+        Raises
+        ------
+        ValueError
+            If no frequency is specified, and no default frequency was set either
+
+        """
+        if flux_freq_MHz is None:
+            flux_freq_MHz = self.flux_freq_MHz
+        if flux_freq_MHz is None:
+            raise ValueError('Please specify frequency at which to measure flux density')
+        if self.flux_model is None:
+            return np.full(np.shape(flux_freq_MHz) + (4,), np.nan)
+        return self.flux_model.flux_density_stokes(flux_freq_MHz)
 
     def separation(self, other_target, timestamp=None, antenna=None):
         """Angular separation between this target and another one.
@@ -898,7 +965,7 @@ def construct_target_params(description):
     try:
         description.encode('ascii')
     except UnicodeError:
-        raise ValueError("Target description %r contains non-ASCII characters" % description)
+        raise NonAsciiError("Target description %r contains non-ASCII characters" % description)
     fields = [s.strip() for s in description.split(',')]
     if len(fields) < 2:
         raise ValueError("Target description '%s' must have at least two fields" % description)
