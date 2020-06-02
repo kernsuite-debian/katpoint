@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -21,12 +21,14 @@ contribution from each antenna, as well as a class that performs
 delay correction for a correlator.
 
 """
+from __future__ import print_function, division, absolute_import
+from builtins import object, zip
+from past.builtins import basestring
 
 import logging
 import json
 
 import numpy as np
-from past.builtins import basestring
 
 from .model import Parameter, Model
 from .conversion import azel_to_enu

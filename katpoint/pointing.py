@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -19,6 +19,8 @@
 This implements a pointing model for a non-ideal antenna mount.
 
 """
+from __future__ import print_function, division, absolute_import
+from builtins import range
 
 import logging
 
@@ -35,7 +37,7 @@ class PointingModel(Model):
 
     The pointing model is the one found in the VLBI Field System and has the
     standard terms found in most pointing models, including the DSN and TPOINT
-    models. These terms are numbered P1 to P%d. The first 8 have a standard
+    models. These terms are numbered P1 to P22. The first 8 have a standard
     physical interpretation related to misalignment of the mount coordinate
     system and gravitational deformation, while the rest are ad hoc parameters
     that model remaining systematic effects in the pointing error residuals.
@@ -44,7 +46,7 @@ class PointingModel(Model):
 
     Parameters
     ----------
-    model : file-like object, sequence of %d floats, or string, optional
+    model : file-like object, sequence of 22 floats, or string, optional
         Model specification. If this is a file-like object, load the model
         from it. If this is a sequence of floats, accept it directly as the
         model parameters (defaults to sequence of zeroes). If it is a string,
@@ -92,18 +94,7 @@ class PointingModel(Model):
         params.append(angle_param('P22', 'elevation nod once per az revolution [tpoint HESA]'))
         Model.__init__(self, params)
         self.set(model)
-        # Fix docstrings to contain the number of parameters
-        if '%d' in self.__class__.__doc__:
-            self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
 
-        try:
-            fit_func = self.__class__.fit.__func__  # python2
-        except AttributeError:
-            fit_func = self.__class__.fit  # python 3
-        if '%d' in fit_func.__doc__:
-            fit_func.__doc__ = fit_func.__doc__ % (len(self), len(self))
-
-    # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
         """Obtain pointing offset at requested (az, el) position(s).
 
@@ -125,7 +116,7 @@ class PointingModel(Model):
         -----
         The model is based on poclb/fln.c and poclb/flt.c in Field System version
         9.9.0. The C implementation differs from the official description in
-        [1]_, introducing minor changes to the ad hoc parameters. In this
+        [Him1993]_, introducing minor changes to the ad hoc parameters. In this
         implementation, the angle *phi* is fixed at 90 degrees, which hard-codes
         the model for a standard alt-az mount.
 
@@ -139,8 +130,8 @@ class PointingModel(Model):
 
         References
         ----------
-        .. [1] Himwich, "Pointing Model Derivation," Mark IV Field System Reference
-           Manual, Version 8.2, 1 September 1993, available at
+        .. [Him1993] Himwich, "Pointing Model Derivation," Mark IV Field System
+           Reference Manual, Version 8.2, 1 September 1993, available at
            `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/model.pdf>`_
 
         """
@@ -158,9 +149,9 @@ class PointingModel(Model):
 
         # Obtain pointing correction using full VLBI model for alt-az mount (no P2 or P10 allowed!)
         delta_az = P1 + P3*tan_el - P4*sec_el + P5*sin_az*tan_el - P6*cos_az*tan_el + \
-                   P12*az + P13*cos_az + P14*sin_az + P17*cos_2az + P18*sin_2az
+            P12*az + P13*cos_az + P14*sin_az + P17*cos_2az + P18*sin_2az
         delta_el = P5*cos_az + P6*sin_az + P7 + P8*cos_el + \
-                   P9*el + P11*sin_el + P15*cos_2az + P16*sin_2az + P19*cos_8el + P20*sin_8el + P21*cos_az + P22*sin_az
+            P9*el + P11*sin_el + P15*cos_2az + P16*sin_2az + P19*cos_8el + P20*sin_8el + P21*cos_az + P22*sin_az
 
         return delta_az, delta_el
 
@@ -217,7 +208,7 @@ class PointingModel(Model):
         tan_el = sin_el * sec_el
 
         d_corraz_d_az = 1.0 + P5*cos_az*tan_el + P6*sin_az*tan_el + \
-                        P12 - P13*sin_az + P14*cos_az - P17*2*sin_2az + P18*2*cos_2az
+            P12 - P13*sin_az + P14*cos_az - P17*2*sin_2az + P18*2*cos_2az
         d_corraz_d_el = sec_el * (P3*sec_el - P4*tan_el + P5*sin_az*sec_el - P6*cos_az*sec_el)
         d_correl_d_az = -P5*sin_az + P6*cos_az - P15*2*sin_2az + P16*2*cos_2az - P21*sin_az + P22*cos_az
         d_correl_d_el = 1.0 - P8*sin_el + P9 + P11*cos_el - P19*8*sin_8el + P20*8*cos_8el
@@ -267,9 +258,9 @@ class PointingModel(Model):
             el = el + (a11 * b2 - a21 * b1) / det_J
         else:
             max_error, max_az, max_el = np.vstack((sky_error, pointed_az, pointed_el))[:, np.argmax(sky_error)]
-            logger.warning('Reverse pointing correction did not converge in ' +
-                           '%d iterations - maximum error is %f arcsecs at (az, el) = (%f, %f) radians' %
-                           (iteration + 1, rad2deg(max_error) * 3600., max_az, max_el))
+            logger.warning('Reverse pointing correction did not converge in %d iterations - '
+                           'maximum error is %f arcsecs at (az, el) = (%f, %f) radians',
+                           iteration + 1, rad2deg(max_error) * 3600., max_az, max_el)
         return az, el
 
     def fit(self, az, el, delta_az, delta_el, sigma_daz=None, sigma_del=None, enabled_params=None):
@@ -300,9 +291,9 @@ class PointingModel(Model):
 
         Returns
         -------
-        params : float array, shape (%d,)
+        params : float array, shape (22,)
             Fitted model parameters (full model), in radians
-        sigma_params : float array, shape (%d,)
+        sigma_params : float array, shape (22,)
             Standard errors on fitted parameters, in radians
 
         Notes
@@ -310,12 +301,12 @@ class PointingModel(Model):
         Since the standard pointing model is linear in the model parameters, it
         is fit with linear least-squares techniques. This is done by creating a
         design matrix and solving the linear system via singular value
-        decomposition (SVD), as explained in [1]_.
+        decomposition (SVD), as explained in [PTV+1992]_.
 
         References
         ----------
-        .. [1] Press, Teukolsky, Vetterling, Flannery, "Numerical Recipes in C,"
-           2nd Ed., pp. 671-681, 1992. Section 15.4: "General Linear Least
+        .. [PTV+1992] Press, Teukolsky, Vetterling, Flannery, "Numerical Recipes
+           in C," 2nd Ed., pp. 671-681, 1992. Section 15.4: "General Linear Least
            Squares", available at `<http://www.nrbook.com/a/bookcpdf/c15-4.pdf>`_
 
         """
@@ -377,6 +368,6 @@ class PointingModel(Model):
         self.fromlist(param_vector)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
         sigma_params[enabled_params - 1] = np.sqrt(np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1))
-#        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f' % (N, M, s[0] / s[-1]))
+#        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f', N, M, s[0] / s[-1])
 
         return param_vector, sigma_params

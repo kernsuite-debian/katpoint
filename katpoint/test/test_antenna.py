@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -15,37 +15,35 @@
 ################################################################################
 
 """Tests for the antenna module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 import time
-try:
-    import cPickle as pickle  # python2
-except ImportError:
-    import pickle  # python3
+import pickle
 
-import katpoint
 import numpy as np
 
+import katpoint
+
+
 def assert_angles_almost_equal(x, y, decimal):
-    primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
+    def primary_angle(x):
+        return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
 
-class TestAntennaConstruction(unittest.TestCase):
-    """Test construction of antennas from strings and vice versa."""
+
+class TestAntenna(unittest.TestCase):
+    """Test :class:`katpoint.antenna.Antenna`."""
     def setUp(self):
         self.valid_antennas = [
             'XDM, -25:53:23.0, 27:41:03.0, 1406.1086, 15.0',
             'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7 0.0',
-            'FF2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 86.2 25.5 0.0, '
-                  '-0:06:39.6 0 0 0 0 0 0:09:48.9, 1.16'
+            ('FF2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 86.2 25.5 0.0, '
+             '-0:06:39.6 0 0 0 0 0 0:09:48.9, 1.16')
             ]
         self.invalid_antennas = [
             'XDM, -25:53:23.05075, 27:41:03.0',
             '',
-            # Delay model can now have any number of terms (not 3 minimum)
-#           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7',
-#           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4, -8.7, 0.0'
             ]
         self.timestamp = '2009/07/07 08:36:20'
 
@@ -91,3 +89,9 @@ class TestAntennaConstruction(unittest.TestCase):
         sid3 = ant.local_sidereal_time([self.timestamp, self.timestamp])
         sid4 = ant.local_sidereal_time([utc_secs, utc_secs])
         assert_angles_almost_equal(sid3, sid4, decimal=12)
+
+    def test_array_reference_antenna(self):
+        ant = katpoint.Antenna(self.valid_antennas[2])
+        ref_ant = ant.array_reference_antenna()
+        self.assertEqual(ref_ant.description,
+                         'array, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, , , 1.16')

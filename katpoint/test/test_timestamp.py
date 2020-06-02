@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -15,13 +15,14 @@
 ################################################################################
 
 """Tests for the timestamp module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 
 import ephem
 
 import katpoint
+
 
 class TestTimestamp(unittest.TestCase):
     """Test timestamp creation and conversion."""
