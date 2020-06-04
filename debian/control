@@ -2,18 +2,37 @@ Source: katpoint
 Section: python
 Priority: optional
 Maintainer: Gijs Molenaar <gijs@pythonic.nl>
-Build-Depends: debhelper (>= 9), dh-python, python-all, python-setuptools,
- python-katversion, python-ephem
-Standards-Version: 3.9.4
+Build-Depends: debhelper (>= 9),
+ dh-python,
+ python-all,
+ python3-all,
+ python-setuptools,
+ python3-setuptools,
+ katversion,
+ python-katversion,
+ python-ephem,
+ python3-ephem
+Standards-Version: 4.4.1
 Homepage: https://github.com/ska-sa/katpoint
 Vcs-Git: git://github.com/kernsuite-debian/katpoint.git
 Vcs-Browser: https://github.com/kernsuite-debian/katpoint
 X-Python-Version: >= 2.7
+X-Python3-Version: >= 3.3
 
 Package: python-katpoint
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
  python-katversion, python-ephem
+Description: Karoo Array Telescope pointing coordinate library
+ Coordinate library for the MeerKAT project, providing astronomical coordinate
+ transformations, antenna pointing models, correlator delay models, source
+ flux models and basic source catalogues, using an existing coordinate
+ library such as PyEphem to do the low-level calculations.
+
+Package: python3-katpoint
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends},
+ python3-katversion, python3-ephem
 Description: Karoo Array Telescope pointing coordinate library
  Coordinate library for the MeerKAT project, providing astronomical coordinate
  transformations, antenna pointing models, correlator delay models, source
