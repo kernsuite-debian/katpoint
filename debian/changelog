@@ -1,3 +1,10 @@
+katpoint (0.9-1kern2) focal; urgency=medium
+
+  [ Athanaseus Javas Ramaila]
+  * Build for focal
+
+ -- KERN packaging <packaging@kernsuite.info>  Tue, 02 Feb 2021 11:15:23 +0000
+
 katpoint (0.9-1kern1) bionic; urgency=medium
 
   [ Athanaseus Javas Ramaila]
