@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2021, National Research Foundation (SARAO)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -17,7 +17,12 @@
 """Tests for the flux module."""
 from __future__ import print_function, division, absolute_import
 
-import unittest2 as unittest
+import sys
+
+if sys.version_info < (3,):
+    import unittest2 as unittest
+else:
+    import unittest
 
 import numpy as np
 

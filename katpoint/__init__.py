@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2021, National Research Foundation (SARAO)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -28,6 +28,9 @@ and CASA.
 from __future__ import print_function, division, absolute_import
 
 import logging as _logging
+import warnings as _warnings
+
+import future.utils
 
 from .target import Target, construct_azel_target, construct_radec_target, NonAsciiError
 from .antenna import Antenna
@@ -47,11 +50,11 @@ from .delay import DelayModel, DelayCorrection
 # If the module is reloaded, this will fail - ignore the resulting NameError
 try:
     _target, _antenna, _timestamp, _flux, _catalogue, _ephem_extra, \
-        _conversion, _projection, _pointing, _refraction, _delay = \
+        _conversion, _pointing, _refraction, _delay = \
         target, antenna, timestamp, flux, catalogue, ephem_extra, \
-        conversion, projection, pointing, refraction, delay
+        conversion, pointing, refraction, delay
     del target, antenna, timestamp, flux, catalogue, ephem_extra, \
-        conversion, projection, pointing, refraction, delay
+        conversion, pointing, refraction, delay
 except NameError:
     pass
 
@@ -68,6 +71,14 @@ _no_config_handler.setFormatter(_logging.Formatter(_logging.BASIC_FORMAT))
 _no_config_handler.addFilter(_NoConfigFilter())
 logger = _logging.getLogger(__name__)
 logger.addHandler(_no_config_handler)
+
+if future.utils.PY2:
+    _PY2_WARNING = (
+        "Python 2 has reached End-of-Life, and a future version of katpoint "
+        "will remove support for it. Please update your scripts to Python 3 "
+        "as soon as possible."
+    )
+    _warnings.warn(_PY2_WARNING, FutureWarning)
 
 # BEGIN VERSION CHECK
 # Get package version when locally imported from repo or via -e develop install

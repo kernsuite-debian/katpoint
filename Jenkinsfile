@@ -2,5 +2,6 @@
 
 @Library('katsdpjenkins') _
 katsdp.killOldJobs()
-katsdp.standardBuild(python3: true)
+katsdp.setDependencies(['ska-sa/katsdpdockerbase/master'])
+katsdp.standardBuild()
 katsdp.mail('ludwig@ska.ac.za')
