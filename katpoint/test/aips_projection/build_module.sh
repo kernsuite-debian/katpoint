@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2021, National Research Foundation (SARAO)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -26,14 +26,14 @@
 #
 
 # Obtain AIPS source files (keep URL up to date!)
-aips_src=ftp.aoc.nrao.edu::31DEC16
+aips_src=ftp.aoc.nrao.edu::31DEC20
 rsync -auvz --timeout=120 --files-from=aips_files.lst --no-relative $aips_src .
 for f in *.FOR; do mv $f ${f/.FOR/.F}; done
 # Add f2py icing and comment out troublesome AIPS calls
 patch -p0 < aips_files.patch
 
 # On some systems the Python version is appended to f2py executable name (probably to avoid clashes)
-pyver=`python -c "import sys; print('%d.%d' % sys.version_info[:2])"`
+pyver=`python3 -c "import sys; print('%d.%d' % sys.version_info[:2])"`
 f2py_exe='f2py'$pyver
 if ! which $f2py_exe ; then
   f2py_exe='f2py'
