@@ -1,3 +1,11 @@
+katpoint (0.10.1-1kern1) jammy; urgency=medium
+
+  [ Athanaseus Javas Ramaila ]
+  * New upstream version 10.1
+  * Build for jammy
+
+ -- KERN packaging <packaging@kernsuite.info>  Sat, 06 Apr 2024 09:06:38 +0000
+
 katpoint (0.10-1kern1) focal; urgency=medium
 
   [ Athanaseus Javas Ramaila ]
