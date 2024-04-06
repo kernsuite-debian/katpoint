@@ -1,18 +1,18 @@
 Source: katpoint
 Section: python
 Priority: optional
-Maintainer: Gijs Molenaar <gijs@pythonic.nl>
-Build-Depends: debhelper (>= 10),
+Maintainer: KERN packaging <packaging@kernsuite.info>
+Build-Depends: debhelper-compat (= 13),
  dh-python,
  katversion,
  python3-all,
  python3-setuptools,
  python3-ephem
-Standards-Version: 4.6.1
+Standards-Version: 4.6.2.0
 Homepage: https://github.com/ska-sa/katpoint
 Vcs-Git: git://github.com/kernsuite-debian/katpoint.git
 Vcs-Browser: https://github.com/kernsuite-debian/katpoint
-X-Python3-Version: >= 3.3
+X-Python3-Version: >= 3.10
 
 Package: python3-katpoint
 Architecture: any
