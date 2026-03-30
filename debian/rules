@@ -15,3 +15,9 @@ override_dh_auto_test:
 	mkdir -p debian/python_shims
 	echo "import importlib.util; from importlib import reload" > debian/python_shims/imp.py
 	dh_auto_test
+
+override_dh_auto_configure:
+	sed -i "/import future.utils/d" katpoint/__init__.py
+	grep -l "from past.builtins import basestring" katpoint/*.py | xargs -r sed -i "s/from past.builtins import basestring/basestring = str/"
+	grep -l "from future.utils import iteritems" katpoint/*.py | xargs -r sed -i "s/from future.utils import iteritems/iteritems = lambda d: iter(d.items())/"
+	dh_auto_configure
