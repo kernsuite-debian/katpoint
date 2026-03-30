@@ -7,12 +7,17 @@ Build-Depends: debhelper-compat (= 13),
  katversion,
  python3-all,
  python3-setuptools,
- python3-ephem
-Standards-Version: 4.6.2.0
+ python3-pytest,
+ python3-ephem,
+ python3-future,
+ python3-pkg-resources,
+ python3-six,
+ python3-numpy
+Standards-Version: 4.7.2.0
 Homepage: https://github.com/ska-sa/katpoint
 Vcs-Git: git://github.com/kernsuite-debian/katpoint.git
 Vcs-Browser: https://github.com/kernsuite-debian/katpoint
-X-Python3-Version: >= 3.10
+X-Python3-Version: >= 3.12
 
 Package: python3-katpoint
 Architecture: any

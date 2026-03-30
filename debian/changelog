@@ -1,3 +1,11 @@
+katpoint (0.10.2-1kern1) noble; urgency=medium
+
+  [ Athanaseus Javas Ramaila ]
+  * New upstream version 10.2
+  * Build for noble
+
+ -- KERN packaging <packaging@kernsuite.info>  Sun, 29 Mar 2026 22:50:45 +0200
+
 katpoint (0.10.1-1kern1) jammy; urgency=medium
 
   [ Athanaseus Javas Ramaila ]

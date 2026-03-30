@@ -3,17 +3,15 @@
 
 export DH_VERBOSE=1
 export PYBUILD_NAME=katpoint
+export PYBUILD_TEST_ARGS={dir}/katpoint/test
+# Set the test runner to pytest
+export PYBUILD_TEST_RUNNER=pytest
+export PYTHONPATH := $(CURDIR)/debian/python_shims:$(PYTHONPATH)
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
 
-override_dh_auto_clean:
-	dh_clean
-	rm -rf .eggs
-	find katpoint -name "*.pyc" -delete
-	rm -rf .pybuild
-	rm -rf build
-	rm -rf *.egg-info
-
 override_dh_auto_test:
-	true
+	mkdir -p debian/python_shims
+	echo "import importlib.util; from importlib import reload" > debian/python_shims/imp.py
+	dh_auto_test
